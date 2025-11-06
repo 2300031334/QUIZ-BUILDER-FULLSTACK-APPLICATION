@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "quiz-builder.backend.name" . }}
+  labels:
+    {{- include "quiz-builder.labels" . | nindent 4 }}
+    app: {{ include "quiz-builder.backend.name" . }}
+spec:
+  replicas: {{ .Values.backend.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "quiz-builder.backend.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "quiz-builder.labels" . | nindent 8 }}
+        app: {{ include "quiz-builder.backend.name" . }}
+    spec:
+      containers:
+        - name: backend
+          image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag }}"
+          imagePullPolicy: {{ .Values.backend.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.backend.service.targetPort }}
+              name: http
+              protocol: TCP
+          env:
+            - name: NODE_ENV
+              value: "production"
+            - name: DATABASE_HOST
+              value: {{ .Values.backend.env.DATABASE_HOST | quote }}
+            - name: DATABASE_PORT
+              value: {{ .Values.backend.env.DATABASE_PORT | quote }}
+            - name: DATABASE_USER
+              value: {{ .Values.backend.env.DATABASE_USER | quote }}
+            - name: DATABASE_PASSWORD
+              value: {{ .Values.backend.env.DATABASE_PASSWORD | quote }}
+            - name: DATABASE_NAME
+              value: {{ .Values.backend.env.DATABASE_NAME | quote }}
+          resources:
+            requests:
+              cpu: {{ .Values.backend.resources.requests.cpu }}
+              memory: {{ .Values.backend.resources.requests.memory }}
+            limits:
+              cpu: {{ .Values.backend.resources.limits.cpu }}
+              memory: {{ .Values.backend.resources.limits.memory }}
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: {{ .Values.backend.service.targetPort }}
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            failureThreshold: 3
+            successThreshold: 1
+            timeoutSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: {{ .Values.backend.service.targetPort }}
+            initialDelaySeconds: 30
+            periodSeconds: 20
+            failureThreshold: 5
+            successThreshold: 1
+            timeoutSeconds: 5

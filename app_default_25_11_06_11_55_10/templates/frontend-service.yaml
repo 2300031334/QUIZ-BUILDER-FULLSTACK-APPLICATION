@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "quiz-builder.frontend.name" . }}
+  labels:
+    {{- include "quiz-builder.labels" . | nindent 4 }}
+    app: {{ include "quiz-builder.frontend.name" . }}
+spec:
+  type: {{ .Values.frontend.service.type }}
+  ports:
+    - port: {{ .Values.frontend.service.port }}
+      targetPort: {{ .Values.frontend.service.targetPort }}
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "quiz-builder.frontend.selectorLabels" . | nindent 4 }}
+  sessionAffinity: {{ .Values.frontend.service.sessionAffinity | default "None" }}

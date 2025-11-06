@@ -1,0 +1,74 @@
+# Default values for quiz-builder.
+
+# Frontend configuration
+frontend:
+  image:
+    repository: quiz-builder/frontend
+    tag: "1.0.0"
+    pullPolicy: IfNotPresent
+  replicaCount: 2
+  service:
+    type: ClusterIP
+    port: 80
+    targetPort: 3000
+    sessionAffinity: None
+  ingress:
+    enabled: true
+    host: quiz.example.com
+    path: /
+    ingressClassName: nginx
+    tls:
+      enabled: true
+      secretName: quiz-builder-tls
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  hpa:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 70
+
+# Backend configuration
+backend:
+  image:
+    repository: quiz-builder/backend
+    tag: "1.0.0"
+    pullPolicy: IfNotPresent
+  replicaCount: 2
+  service:
+    type: ClusterIP
+    port: 8080
+    targetPort: 8080
+    sessionAffinity: None
+  ingress:
+    enabled: false
+    host: backend.quiz.example.com
+    path: /
+    ingressClassName: nginx
+    tls:
+      enabled: false
+      secretName: backend-quiz-builder-tls
+  resources:
+    requests:
+      cpu: 150m
+      memory: 256Mi
+    limits:
+      cpu: 700m
+      memory: 1Gi
+  hpa:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 75
+  env:
+    # Example environment variables for backend service
+    DATABASE_HOST: quiz-db-host
+    DATABASE_PORT: "5432"
+    DATABASE_USER: quizuser
+    DATABASE_PASSWORD: securepassword
+    DATABASE_NAME: quizdb

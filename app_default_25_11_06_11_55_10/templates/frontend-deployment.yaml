@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "quiz-builder.frontend.name" . }}
+  labels:
+    {{- include "quiz-builder.labels" . | nindent 4 }}
+    app: {{ include "quiz-builder.frontend.name" . }}
+spec:
+  replicas: {{ .Values.frontend.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "quiz-builder.frontend.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "quiz-builder.labels" . | nindent 8 }}
+        app: {{ include "quiz-builder.frontend.name" . }}
+    spec:
+      containers:
+        - name: frontend
+          image: "{{ .Values.frontend.image.repository }}:{{ .Values.frontend.image.tag }}"
+          imagePullPolicy: {{ .Values.frontend.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.frontend.service.targetPort }}
+              name: http
+              protocol: TCP
+          env:
+            - name: NODE_ENV
+              value: "production"
+          resources:
+            requests:
+              cpu: {{ .Values.frontend.resources.requests.cpu }}
+              memory: {{ .Values.frontend.resources.requests.memory }}
+            limits:
+              cpu: {{ .Values.frontend.resources.limits.cpu }}
+              memory: {{ .Values.frontend.resources.limits.memory }}
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: {{ .Values.frontend.service.targetPort }}
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            failureThreshold: 3
+            successThreshold: 1
+            timeoutSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: {{ .Values.frontend.service.targetPort }}
+            initialDelaySeconds: 30
+            periodSeconds: 20
+            failureThreshold: 5
+            successThreshold: 1
+            timeoutSeconds: 5
